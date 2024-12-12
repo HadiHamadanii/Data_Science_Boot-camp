@@ -1,0 +1,75 @@
+<!-- Styles -->
+<style>
+#chartdiv {
+  width: 100%;
+  max-width: 100%;
+  height: 550px;
+}
+</style>
+
+<!-- Resources -->
+<script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+<script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+<script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+
+<!-- Chart code -->
+<script>
+am5.ready(function() {
+
+  // Create root element
+  var root = am5.Root.new("chartdiv");
+
+  // Set themes
+  root.setThemes([
+    am5themes_Animated.new(root)
+  ]);
+
+  // Create chart
+  var chart = root.container.children.push(am5xy.XYChart.new(root, {
+    paddingRight: 20,
+    layout: root.horizontalLayout
+  }));
+
+  // Create axes
+  var xAxis = chart.xAxes.push(am5xy.ValueAxis.new(root, {
+    renderer: am5xy.AxisRendererX.new(root, {})
+  }));
+
+  var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+    renderer: am5xy.AxisRendererY.new(root, {})
+  }));
+
+  // Create series
+  var series = chart.series.push(am5xy.BubbleSeries.new(root, {
+    name: "Articles",
+    xAxis: xAxis,
+    yAxis: yAxis,
+    valueXField: "count",
+    valueYField: "count",
+    categoryField: "keyword",
+    tooltip: am5.Tooltip.new(root, {
+      labelText: "{categoryX}: {valueY}"
+    })
+  }));
+
+  // Load data
+  fetch('http://127.0.0.1:5000/articles_by_keyword/"طوفان الأقصى"')
+    .then(response => response.json())
+    .then(data => {
+      series.data.setAll(data.map(item => ({
+        keyword: item.keyword,
+        count: item.count
+      })));
+    });
+
+  // Add cursor
+  chart.set("cursor", am5xy.XYCursor.new(root, {}));
+
+  // Make stuff animate on load
+  series.appear(1000, 100);
+
+}); // end am5.ready()
+</script>
+
+<!-- HTML -->
+<div id="chartdiv"></div>

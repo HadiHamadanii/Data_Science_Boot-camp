@@ -1,0 +1,83 @@
+<!-- Styles -->
+<style>
+  #chartdiv {
+    width: 100%;
+    height: 500px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 16px;
+    text-align: left;
+  }
+  th, td {
+    padding: 12px;
+    border: 1px solid #ddd;
+  }
+  th {
+    background-color: #f2f2f2;
+  }
+  td img {
+    max-width: 100px;
+    height: auto;
+  }
+</style>
+
+<!-- Resources -->
+<script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+<script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+
+<!-- Chart code -->
+<script>
+  am5.ready(function() {
+    // Fetch recent articles data
+    fetch('http://127.0.0.1:5000/recent_articles')
+      .then(response => response.json())
+      .then(data => {
+        if (data.message) {
+          document.getElementById('chartdiv').innerHTML = `<p>${data.message}</p>`;
+          return;
+        }
+
+        // Create the table structure
+        let tableHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Published Time</th>
+                <th>Description</th>
+                <th>URL</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        // Populate the table rows with data
+        data.forEach(article => {
+          tableHTML += `
+            <tr>
+              <td>${article.title}</td>
+              <td>${article.author}</td>
+              <td>${new Date(article.published_time).toLocaleString()}</td>
+              <td>${article.description}</td>
+              <td><a href="${article.url}" target="_blank">Read more</a></td>
+            </tr>
+          `;
+        });
+
+        tableHTML += '</tbody></table>';
+
+        // Insert table into the HTML
+        document.getElementById('chartdiv').innerHTML = tableHTML;
+      })
+      .catch(error => {
+        document.getElementById('chartdiv').innerHTML = `<p>Error loading data: ${error}</p>`;
+      });
+  });
+</script>
+
+<!-- HTML -->
+<div id="chartdiv"></div>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Articles by Category</title>
+    <!-- Styles -->
+    <style>
+        #chartdiv {
+            width: 100%;
+            height: 500px;
+        }
+    </style>
+    <!-- Resources -->
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+</head>
+<body>
+    <h1>Articles by Category</h1>
+    <div id="chartdiv"></div>
+    <!-- Chart code -->
+    <script>
+        am5.ready(function() {
+            // Create root element
+            var root = am5.Root.new("chartdiv");
+
+            // Set themes
+            root.setThemes([
+                am5themes_Animated.new(root)
+            ]);
+
+            // Create chart
+            var chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: false,
+                panY: false,
+                wheelX: "panY",
+                wheelY: "zoomY",
+                paddingLeft: 0,
+                layout: root.verticalLayout
+            }));
+
+            // Add scrollbar
+            chart.set("scrollbarY", am5.Scrollbar.new(root, {
+                orientation: "vertical"
+            }));
+
+            // Create axes
+            var yAxis = chart.yAxes.push(am5xy.CategoryAxis.new(root, {
+                categoryField: "category",
+                renderer: am5xy.AxisRendererY.new(root, {
+                    minGridDistance: 20
+                })
+            }));
+
+            var xAxis = chart.xAxes.push(am5xy.ValueAxis.new(root, {
+                renderer: am5xy.AxisRendererX.new(root, {
+                    minGridDistance: 30
+                })
+            }));
+
+            // Add legend
+            var legend = chart.children.push(am5.Legend.new(root, {
+                centerX: am5.p50,
+                x: am5.p50
+            }));
+
+            // Fetch data from the Flask API
+            fetch('http://127.0.0.1:5000/articles_by_classes')
+                .then(response => response.json())
+                .then(data => {
+                    // Check the fetched data
+                    console.log('Fetched data:', data);
+
+                    // Transform data format
+                    var formattedData = data.map(item => ({
+                        category: item._id.value,  // Use the 'value' field for categories
+                        count: item.count
+                    }));
+
+                    // Set data to yAxis
+                    yAxis.data.setAll(formattedData);
+
+                    // Create series
+                    var series = chart.series.push(am5xy.ColumnSeries.new(root, {
+                        name: "Article Count",
+                        xAxis: xAxis,
+                        yAxis: yAxis,
+                        valueXField: "count",
+                        categoryYField: "category",
+                        stacked: true
+                    }));
+
+                    series.columns.template.setAll({
+                        tooltipText: "{categoryY}: {valueX}",
+                        fillOpacity: 0.8
+                    });
+
+                    series.data.setAll(formattedData);
+
+                    // Add series to legend
+                    legend.data.push(series);
+
+                    // Make stuff animate on load
+                    chart.appear(1000, 100);
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        });
+    </script>
+</body>
+</html>

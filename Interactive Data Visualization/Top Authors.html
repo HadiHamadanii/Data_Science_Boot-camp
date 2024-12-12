@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top Authors Chart</title>
+    <!-- Styles -->
+    <style>
+        #chartdiv {
+            width: 100%;
+            height: 500px;
+        }
+    </style>
+    <!-- Resources -->
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Responsive.js"></script>
+</head>
+<body>
+    <!-- HTML -->
+    <div id="chartdiv"></div>
+
+    <!-- Chart code -->
+    <script>
+    am5.ready(function() {
+        // Create root element
+        var root = am5.Root.new("chartdiv");
+
+        const myTheme = am5.Theme.new(root);
+
+        myTheme.rule("AxisLabel", ["minor"]).setAll({
+            dy: 1
+        });
+
+        // Set themes
+        root.setThemes([
+            am5themes_Animated.new(root),
+            myTheme,
+            am5themes_Responsive.new(root)
+        ]);
+
+        // Create chart
+        var chart = root.container.children.push(am5xy.XYChart.new(root, {
+            panX: false,
+            panY: false,
+            wheelX: "panX",
+            wheelY: "zoomX",
+            paddingLeft: 0
+        }));
+
+        // Add cursor
+        var cursor = chart.set("cursor", am5xy.XYCursor.new(root, {
+            behavior: "zoomX"
+        }));
+        cursor.lineY.set("visible", false);
+
+        // Create axes
+        var xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, {
+            categoryField: "author",
+            renderer: am5xy.AxisRendererX.new(root, {
+                grid: { template: { location: 0 } },
+                labels: { rotation: -45 }
+            }),
+            tooltip: am5.Tooltip.new(root, {})
+        }));
+
+        var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+            renderer: am5xy.AxisRendererY.new(root, {})
+        }));
+
+        // Add series
+        var series = chart.series.push(am5xy.ColumnSeries.new(root, {
+            name: "Authors",
+            xAxis: xAxis,
+            yAxis: yAxis,
+            valueYField: "count",
+            categoryXField: "author",
+            tooltip: am5.Tooltip.new(root, {
+                labelText: "{categoryX}: {valueY}"
+            })
+        }));
+
+        series.columns.template.setAll({ strokeOpacity: 0 });
+
+        // Add scrollbar
+        chart.set("scrollbarX", am5.Scrollbar.new(root, {
+            orientation: "horizontal"
+        }));
+
+        // Fetch data from the Flask endpoint
+        fetch('http://127.0.0.1:5000/top_authors')
+            .then(response => response.json())
+            .then(data => {
+                // Format the data
+                const chartData = data.map(item => ({
+                    author: item._id,
+                    count: item.count
+                }));
+
+                // Set data
+                series.data.setAll(chartData);
+                xAxis.data.setAll(chartData);
+
+                // Animate chart
+                series.appear(1000);
+                chart.appear(1000, 100);
+            })
+            .catch(error => {
+                console.error('Error fetching data:', error);
+            });
+
+    }); // end am5.ready()
+    </script>
+</body>
+</html>
